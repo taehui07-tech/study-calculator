@@ -1,0 +1,185 @@
+
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: var(--font-sans); }
+.wrap { padding: 1.5rem 0; max-width: 680px; }
+h1 { font-size: 22px; font-weight: 500; color: var(--color-text-primary); margin-bottom: 0.25rem; }
+.sub { font-size: 14px; color: var(--color-text-secondary); margin-bottom: 1.5rem; }
+.card { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 1.25rem; margin-bottom: 1rem; }
+.card h2 { font-size: 16px; font-weight: 500; color: var(--color-text-primary); margin-bottom: 1rem; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.field { display: flex; flex-direction: column; gap: 6px; }
+.field label { font-size: 13px; color: var(--color-text-secondary); }
+.field input { width: 100%; padding: 8px 10px; border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); font-size: 14px; background: var(--color-background-primary); color: var(--color-text-primary); }
+.field input:focus { outline: none; box-shadow: 0 0 0 2px #378ADD44; border-color: #378ADD; }
+.field-full { grid-column: 1 / -1; }
+.calc-btn { width: 100%; padding: 10px; background: var(--color-text-primary); color: var(--color-background-primary); border: none; border-radius: var(--border-radius-md); font-size: 15px; font-weight: 500; cursor: pointer; margin-top: 0.5rem; }
+.calc-btn:hover { opacity: 0.85; }
+#results { display: none; }
+.metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px; margin-bottom: 1rem; }
+.metric { background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 0.75rem 1rem; }
+.metric .mlabel { font-size: 12px; color: var(--color-text-secondary); margin-bottom: 4px; }
+.metric .mval { font-size: 22px; font-weight: 500; color: var(--color-text-primary); }
+.metric .munit { font-size: 12px; color: var(--color-text-secondary); }
+.risk-banner { border-radius: var(--border-radius-md); padding: 1rem 1.25rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 12px; }
+.risk-banner .risk-icon { font-size: 28px; }
+.risk-banner .risk-title { font-size: 16px; font-weight: 500; }
+.risk-banner .risk-desc { font-size: 13px; margin-top: 2px; }
+.risk-safe { background: #EAF3DE; }
+.risk-safe .risk-title { color: #3B6D11; }
+.risk-safe .risk-desc { color: #639922; }
+.risk-caution { background: #FAEEDA; }
+.risk-caution .risk-title { color: #854F0B; }
+.risk-caution .risk-desc { color: #BA7517; }
+.risk-danger { background: #FAECE7; }
+.risk-danger .risk-title { color: #993C1D; }
+.risk-danger .risk-desc { color: #D85A30; }
+.risk-critical { background: #FCEBEB; }
+.risk-critical .risk-title { color: #A32D2D; }
+.risk-critical .risk-desc { color: #E24B4A; }
+.plan-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.plan-table th { text-align: left; font-weight: 500; font-size: 12px; color: var(--color-text-secondary); padding: 6px 8px; border-bottom: 0.5px solid var(--color-border-tertiary); }
+.plan-table td { padding: 7px 8px; border-bottom: 0.5px solid var(--color-border-tertiary); color: var(--color-text-primary); }
+.plan-table tr:last-child td { border-bottom: none; }
+.bar { height: 6px; background: var(--color-border-tertiary); border-radius: 3px; margin-top: 4px; }
+.bar-fill { height: 100%; border-radius: 3px; }
+.today-row td { font-weight: 500; }
+.complete-note { font-size: 13px; color: var(--color-text-secondary); padding: 0.5rem 0; }
+@media (max-width: 480px) { .grid2 { grid-template-columns: 1fr; } }
+</style>
+<h2 class="sr-only">Last-minute study calculator — enter your assignment details to get a study plan and risk level</h2>
+<div class="wrap">
+  <h1><i class="ti ti-clock" aria-hidden="true" style="font-size:20px; margin-right:6px; vertical-align:-2px;"></i>벼락치기 계산기</h1>
+  <p class="sub">Enter your assignment details to get your study plan and risk level.</p>
+
+  <div class="card">
+    <h2>Assignment info</h2>
+    <div class="grid2">
+      <div class="field field-full">
+        <label for="aname">Assignment name</label>
+        <input type="text" id="aname" placeholder="e.g. Final essay, Math exam...">
+      </div>
+      <div class="field">
+        <label for="deadline">Deadline date</label>
+        <input type="date" id="deadline">
+      </div>
+      <div class="field">
+        <label for="total">Total estimated hours</label>
+        <input type="number" id="total" placeholder="e.g. 10" min="0.5" step="0.5">
+      </div>
+      <div class="field">
+        <label for="progress">Current progress (%)</label>
+        <input type="number" id="progress" placeholder="0–100" min="0" max="100" value="0">
+      </div>
+      <div class="field">
+        <label for="daily">Available study hours/day</label>
+        <input type="number" id="daily" placeholder="e.g. 3" min="0.5" step="0.5">
+      </div>
+    </div>
+    <button class="calc-btn" onclick="calculate()">Calculate my plan <i class="ti ti-arrow-right" aria-hidden="true"></i></button>
+  </div>
+
+  <div id="results">
+    <div id="risk-banner" class="risk-banner"></div>
+
+    <div class="card">
+      <h2>Summary</h2>
+      <div class="metrics">
+        <div class="metric"><div class="mlabel">Days remaining</div><div class="mval" id="m-days">—</div><div class="munit">days</div></div>
+        <div class="metric"><div class="mlabel">Work remaining</div><div class="mval" id="m-work">—</div><div class="munit">hours</div></div>
+        <div class="metric"><div class="mlabel">Hours needed/day</div><div class="mval" id="m-need">—</div><div class="munit">hrs/day</div></div>
+        <div class="metric"><div class="mlabel">Can finish?</div><div class="mval" id="m-finish">—</div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Study plan</h2>
+      <div id="plan-wrap"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+function calculate() {
+  const name = document.getElementById('aname').value.trim() || 'Assignment';
+  const deadlineStr = document.getElementById('deadline').value;
+  const total = parseFloat(document.getElementById('total').value);
+  const progress = parseFloat(document.getElementById('progress').value) || 0;
+  const daily = parseFloat(document.getElementById('daily').value);
+
+  if (!deadlineStr || isNaN(total) || total <= 0 || isNaN(daily) || daily <= 0) {
+    alert('Please fill in all fields correctly.');
+    return;
+  }
+  if (progress < 0 || progress > 100) {
+    alert('Progress must be between 0 and 100.');
+    return;
+  }
+
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const deadline = new Date(deadlineStr + 'T23:59:59');
+  const deadlineDay = new Date(deadlineStr);
+
+  if (deadlineDay <= today) {
+    alert('Deadline must be in the future!');
+    return;
+  }
+
+  const daysLeft = Math.ceil((deadlineDay - today) / (1000 * 60 * 60 * 24));
+  const workLeft = parseFloat((total * (1 - progress / 100)).toFixed(1));
+  const hoursNeeded = parseFloat((workLeft / daysLeft).toFixed(1));
+  const canFinish = daily >= hoursNeeded;
+  const ratio = hoursNeeded / daily;
+
+  let riskClass, riskIcon, riskTitle, riskDesc;
+  if (ratio <= 0.5) {
+    riskClass = 'risk-safe'; riskIcon = '🟢';
+    riskTitle = 'Safe';
+    riskDesc = `You need ${hoursNeeded} hrs/day — well within your ${daily} hrs/day limit. You\'re in good shape!`;
+  } else if (ratio <= 0.8) {
+    riskClass = 'risk-caution'; riskIcon = '🟡';
+    riskTitle = 'Caution';
+    riskDesc = `You need ${hoursNeeded} hrs/day out of your ${daily} hrs. Stay consistent and you\'ll be fine.`;
+  } else if (ratio <= 1.0) {
+    riskClass = 'risk-danger'; riskIcon = '🟠';
+    riskTitle = 'Warning';
+    riskDesc = `You need ${hoursNeeded} hrs/day — almost your full ${daily} hrs. No rest days allowed!`;
+  } else {
+    riskClass = 'risk-critical'; riskIcon = '🔴';
+    riskTitle = 'Emergency';
+    riskDesc = `You need ${hoursNeeded} hrs/day but only have ${daily} hrs available. Consider reducing scope or asking for an extension.`;
+  }
+
+  document.getElementById('risk-banner').className = 'risk-banner ' + riskClass;
+  document.getElementById('risk-banner').innerHTML = `<div class="risk-icon">${riskIcon}</div><div><div class="risk-title">${riskTitle} — "${name}"</div><div class="risk-desc">${riskDesc}</div></div>`;
+
+  document.getElementById('m-days').textContent = daysLeft;
+  document.getElementById('m-work').textContent = workLeft;
+  document.getElementById('m-need').textContent = hoursNeeded;
+  document.getElementById('m-finish').textContent = canFinish ? '✅ Yes' : '⚠️ Tight';
+
+  const planWrap = document.getElementById('plan-wrap');
+  const maxShow = Math.min(daysLeft, 14);
+  let rows = '';
+  for (let i = 0; i < maxShow; i++) {
+    const d = new Date(today);
+    d.setDate(today.getDate() + i);
+    const label = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', weekday: 'short' });
+    const hrs = Math.min(hoursNeeded, daily);
+    const pct = Math.round((hrs / daily) * 100);
+    const barColor = ratio > 1 ? '#E24B4A' : ratio > 0.8 ? '#D85A30' : ratio > 0.5 ? '#BA7517' : '#639922';
+    const isToday = i === 0;
+    rows += `<tr class="${isToday ? 'today-row' : ''}">
+      <td>${isToday ? '📍 ' : ''}${label}</td>
+      <td>${hrs.toFixed(1)} hrs</td>
+      <td style="width:120px"><div class="bar"><div class="bar-fill" style="width:${pct}%;background:${barColor}"></div></div></td>
+    </tr>`;
+  }
+  const extra = daysLeft > 14 ? `<p class="complete-note" style="margin-top:0.75rem">Showing first 14 days of ${daysLeft} total — continue this pattern every day until your deadline.</p>` : '';
+  planWrap.innerHTML = `<table class="plan-table"><thead><tr><th>Date</th><th>Study time</th><th>Load</th></tr></thead><tbody>${rows}</tbody></table>${extra}`;
+
+  document.getElementById('results').style.display = 'block';
+  document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+</script>
